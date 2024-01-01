@@ -1,33 +1,64 @@
 import Head from "next/head";
-import { SignInButton, SignOutButton, useUser } from "@clerk/nextjs";
+import { SignInButton, useUser } from "@clerk/nextjs";
 import { api } from "~/utils/api";
+import type { RouterOutputs } from "~/utils/api";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime"
 
-const CreatePostWizard=()=>{
-  const {user}=useUser();
+dayjs.extend(relativeTime);
+
+const CreatePostWizard = () => {
+  const { user } = useUser();
   console.log(user);
-  if(!user) return null;
+  if (!user) return null;
 
-  return(
+  return (
     <div className="flex w-full gap-3">
-      <img src={user.profileImageUrl} alt="profile image"
-      className="h-14 w-14 rounded-full"
+      <img
+        src={user.profileImageUrl}
+        alt="profile image"
+        className="h-14 w-14 rounded-full"
       />
-      <input placeholder="Type some emoji's!!"
-      className="bg-transparent grow outline-none"/>
+      <input
+        placeholder="Type some emoji's!!"
+        className="grow bg-transparent outline-none"
+      />
     </div>
-  )
-}
+  );
+};
+
+type PostWithUser = RouterOutputs["post"]["getAll"][number];
+
+const PostView = (props: PostWithUser) => {
+  const { post, author } = props;
+  return (
+    <div className="flex gap-3 border-b border-slate-400 p-4" key={post.id}>
+      <img
+        src={author.profileImageUrl}
+        className="roundfulll h-14 w-14
+      "
+      />
+      <div className="flex flex-col">
+        <div className="flex gap-1 text-slate-300">
+          <span>{`@${author.username}`}</span>
+          <span className="font-thin">{`· ${dayjs(post.createdAt).fromNow()}`}</span>
+        </div>
+        <span>{post.content}</span>
+      </div>
+    </div>
+  );
+};
 
 export default function Home() {
   const user = useUser();
-  const { data , isLoading } = api.post.getAll.useQuery();
+  const { data, isLoading } = api.post.getAll.useQuery();
 
-  if(isLoading){
-    return(<div>....loading</div>)
+  if (isLoading) {
+    return <div>....loading</div>;
   }
 
-  if(!data){
-    return(<div>something went wrong..</div>)
+  if (!data) {
+    return <div>something went wrong..</div>;
   }
 
   return (
@@ -48,9 +79,9 @@ export default function Home() {
             {!!user.isSignedIn && <CreatePostWizard />}
           </div>
           <div className="flex flex-col">
-            {[...data, ...data].map(({post ,author}) => <div
-             className="border-b border-slate-400 p-8"
-            key={post.id}>{post.content}</div>)}
+            {[...data, ...data].map((fullPost) => (
+              <PostView {...fullPost} key={fullPost.post.id} />
+            ))}
           </div>
         </div>
       </main>
