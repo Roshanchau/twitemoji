@@ -18,6 +18,7 @@ export const postRouter = createTRPCRouter({
   getAll: publicProcedure.query(async({ ctx }) => {
     const posts= await ctx.db.post.findMany({
       take: 100,
+      orderBy:[{createdAt: "desc"}]
     });
     // console.log(posts);
 
@@ -52,7 +53,7 @@ export const postRouter = createTRPCRouter({
       })
     )
     .mutation(async({ctx, input})=>{
-      const authorId=ctx.currentUser.id;
+      const authorId=ctx.currentUser;
 
       const post=await ctx.db.post.create({
         data:{
